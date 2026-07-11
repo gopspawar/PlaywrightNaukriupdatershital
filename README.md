@@ -7,6 +7,11 @@ Lightweight Playwright + TypeScript script that logs into your own Naukri accoun
 - Auto Login
 - Resume Update
 
+## Installation
+npm install
+npx playwright install -
+
+
 ## Project Structure
 
 ```
