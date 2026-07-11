@@ -2,6 +2,11 @@
 
 Lightweight Playwright + TypeScript script that logs into your own Naukri account and adds any missing key skills from a reusable list — without duplicating or removing skills already on your profile.
 
+## Features
+- Playwright Automation
+- Auto Login
+- Resume Update
+
 ## Project Structure
 
 ```
