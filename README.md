@@ -8,7 +8,7 @@ Lightweight Playwright + TypeScript script that logs into your own Naukri accoun
 playwright-naukri/
 ├── tests/
 │   └── updateSkills.spec.ts
-├── .env.example
+├── .env
 ├── playwright.config.ts
 ├── package.json
 └── tsconfig.json
