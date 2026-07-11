@@ -9,7 +9,8 @@ Lightweight Playwright + TypeScript script that logs into your own Naukri accoun
 
 ## Installation
 npm install
-npx playwright install
+npx playwright install -
+
 
 ## Project Structure
 
