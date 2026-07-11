@@ -1,0 +1,22 @@
+{
+  "name": "playwright-naukri",
+  "version": "1.0.0",
+  "description": "Lightweight Playwright + TypeScript script to update key skills on your own Naukri profile.",
+  "scripts": {
+    "test": "playwright test",
+    "test:update-skills": "playwright test tests/updateSkills.spec.ts",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "codegen": "playwright codegen https://www.naukri.com"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
