@@ -10,7 +10,7 @@ export default defineConfig({
   ],
 
   use: {
-    headless: true,
+    headless: false,
     viewport: { width: 1440, height: 900 },
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
