@@ -4,16 +4,24 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const skills = [
-  'Java',    
+  'Java',
   'Spring',
   'Spring Boot',
   'Spring MVC',
   'Microservices',
 ];
 
-//test('Update Naukri Skills', async ({ page }) => {
 test('Update Naukri Skills', async ({ page }) => {
-  test.setTimeout(90_000);
+
+  // Fail fast if secrets aren't actually available to this run
+  if (!process.env.NAUKRI_EMAIL || !process.env.NAUKRI_PASSWORD) {
+    throw new Error(
+      'NAUKRI_EMAIL / NAUKRI_PASSWORD is empty. ' +
+      'Check that repository secrets are set (Settings > Secrets and variables > Actions) ' +
+      'in THIS repo, and that the workflow YAML passes them via env: correctly.'
+    );
+  }
+
   // Open Naukri
   await page.goto('https://www.naukri.com/', {
     waitUntil: 'domcontentloaded'
@@ -38,15 +46,49 @@ test('Update Naukri Skills', async ({ page }) => {
     exact: true
   }).click();
 
-  // Wait until dashboard loads
-  await page.waitForLoadState('networkidle');
+  // Wait for a real post-login signal instead of networkidle
+  try {
+    await page.waitForURL(/naukri\.com\/mnjuser\/homepage/, { timeout: 30000 });
+  } catch (e) {
+    await page.screenshot({ path: 'debug-post-login-nav.png', fullPage: true });
+    const url = page.url();
+    const bodyText = await page.locator('body').innerText().catch(() => '');
+    console.log('URL after login attempt:', url);
+
+    // Surface likely causes explicitly instead of a generic timeout
+    if (/captcha/i.test(bodyText)) {
+      throw new Error('Login blocked by CAPTCHA. See debug-post-login-nav.png');
+    }
+    if (/otp|verify|verification/i.test(bodyText)) {
+      throw new Error('Login requires OTP/verification step. See debug-post-login-nav.png');
+    }
+    if (/invalid|incorrect/i.test(bodyText)) {
+      throw new Error('Login rejected — check NAUKRI_EMAIL / NAUKRI_PASSWORD values. See debug-post-login-nav.png');
+    }
+    throw new Error(
+      `Did not reach dashboard after login. Current URL: ${url}. See debug-post-login-nav.png`
+    );
+  }
+
+  // Dismiss any post-login popup/modal if present (profile completion, app download, notif permission, etc.)
+  const modalClose = page.locator(
+    '.crossLayer, [class*="modal"] .icon-close, .close-btn, [class*="Layer"] .ic-close'
+  ).first();
+  if (await modalClose.isVisible({ timeout: 5000 }).catch(() => false)) {
+    await modalClose.click().catch(() => {});
+    await page.waitForTimeout(500);
+  }
 
   // Open Profile
-  await page.getByRole('link', {
-    name: /View profile/i
-  }).click();
+  try {
+    await page.getByRole('link', { name: /View profile/i }).click({ timeout: 30000 });
+  } catch (e) {
+    await page.screenshot({ path: 'debug-view-profile-click.png', fullPage: true });
+    console.log('URL at View Profile click failure:', page.url());
+    throw e;
+  }
 
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   // Scroll to Key Skills
   const skillSection = page.locator('#lazyKeySkills');
@@ -99,8 +141,9 @@ test('Update Naukri Skills', async ({ page }) => {
   await expect(saveButton).toBeEnabled();
   await saveButton.click();
 
-  // Wait for save
-  await page.waitForLoadState('networkidle');
+  // Wait for save to settle
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(2000);
 
   // Verification
   for (const skill of skills) {
@@ -111,10 +154,9 @@ test('Update Naukri Skills', async ({ page }) => {
     }
   }
 
-  //await page.locator('.crossLayer').nth(7).click();
-await page.reload({
-  waitUntil: 'networkidle'
-});
+  // Reload and logout
+  await page.reload({ waitUntil: 'domcontentloaded' });
+
   await page.locator('.nI-gNb-drawer__icon-img-wrapper img').click();
   await page.getByText('Logout').click();
 
